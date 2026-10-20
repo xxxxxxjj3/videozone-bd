@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>VideoZone BD</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#151f30;--text:#f8fafc;--muted:#a8b4c7;--accent:#38bdf8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#101827;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #29364a}
+.brand{font-weight:900;font-size:19px;color:var(--accent)}
+button,input,select,textarea{font:inherit;border-radius:10px;padding:11px;border:1px solid #34445b}
+button{background:var(--accent);color:#061321;border:0;font-weight:700;cursor:pointer}
+button.secondary{background:#26364b;color:white}
+button:disabled{opacity:.5}
+main{max-width:1000px;margin:auto;padding:16px}
+.hero{padding:24px 5px}
+.hero h1{font-size:clamp(27px,6vw,42px);margin:0 0 8px}
+.muted{color:var(--muted);font-size:14px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
+input,select,textarea{width:100%;background:#0f1929;color:white;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:15px}
+.card,.panel{background:var(--panel);border:1px solid #29364a;border-radius:16px;overflow:hidden}
+.thumb{width:100%;aspect-ratio:16/9;background:#202d41;object-fit:cover;display:block}
+.cardbody{padding:13px}
+.card h3{margin:0 0 7px;font-size:18px;overflow-wrap:anywhere}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.actions button{flex:1}
+.panel{padding:16px;margin:18px 0}
+.panel h2{margin-top:0}
+form{display:grid;gap:10px}
+#playerWrap{display:none}
+#player{width:100%;aspect-ratio:16/9;border:0;background:#000}
+#comments{display:grid;gap:8px;margin-top:12px}
+.comment{background:#0e1828;padding:10px;border-radius:10px;overflow-wrap:anywhere}
+footer{text-align:center;padding:25px;color:var(--muted)}
+.hidden{display:none!important}
+@media(max-width:520px){header{flex-wrap:wrap}.controls{grid-template-columns:1fr}.brand{font-size:17px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">▶ VideoZone BD</div>
+  <div>
+    <button id="loginBtn">Google Login</button>
+    <button id="logoutBtn" class="secondary hidden">Logout</button>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <h1>আপনার ভিডিও, আপনার জগৎ</h1>
+  <p class="muted">ভিডিও দেখুন, পছন্দের ভিডিও খুঁজুন এবং কমিউনিটিতে অংশ নিন।</p>
+  <p id="status" class="muted">Firebase-এর সঙ্গে সংযোগ করা হচ্ছে…</p>
+  <p id="account" class="muted"></p>
+</section>
+
+<section class="controls">
+  <input id="search" placeholder="ভিডিওর নাম লিখে খুঁজুন…">
+  <select id="category">
+    <option value="">সব ক্যাটাগরি</option>
+    <option>Gaming</option><option>Entertainment</option>
+    <option>Education</option><option>Islamic</option>
+    <option>Nature</option><option>News</option><option>Other</option>
+  </select>
+</section>
+
+<section id="playerWrap" class="panel">
+  <h2 id="playerTitle">ভিডিও</h2>
+  <div id="player"></div>
+  <p id="playerDescription" class="muted"></p>
+  <p id="viewCount" class="muted"></p>
+  <div class="actions">
+    <button id="likeBtn">♡ লাইক</button>
+    <button id="closePlayer" class="secondary">বন্ধ করুন</button>
+  </div>
+  <h3>মন্তব্য</h3>
+  <form id="commentForm">
+    <textarea id="commentText" maxlength="500" placeholder="আপনার মন্তব্য লিখুন…" required></textarea>
+    <button>মন্তব্য পাঠান</button>
+  </form>
+  <div id="comments"></div>
+</section>
+
+<section id="adminPanel" class="panel hidden">
+  <h2>Admin Panel · ভিডিও যোগ করুন</h2>
+  <p class="muted">এখানে ভিডিওর URL দিতে হবে। ভিডিও ফাইল আপলোড এই সংস্করণে নেই।</p>
+  <form id="videoForm">
+    <input id="videoTitle" maxlength="120" placeholder="ভিডিওর নাম" required>
+    <textarea id="videoDescription" maxlength="1000" placeholder="ভিডিওর বিবরণ"></textarea>
+    <select id="videoCategory" required>
+      <option value="">ক্যাটাগরি বাছুন</option>
+      <option>Gaming</option><option>Entertainment</option>
+      <option>Education</option><option>Islamic</option>
+      <option>Nature</option><option>News</option><option>Other</option>
+    </select>
+    <input id="videoUrl" type="url" placeholder="YouTube URL অথবা সরাসরি MP4 URL" required>
+    <input id="thumbnailUrl" type="url" placeholder="Thumbnail image URL (ঐচ্ছিক)">
+    <button>ভিডিও যোগ করুন</button>
+  </form>
+</section>
+
+<h2>সাম্প্রতিক ভিডিও</h2>
+<div id="videos" class="grid"></div>
+<p id="empty" class="muted">ভিডিও লোড হচ্ছে…</p>
+</main>
+
+<footer>VideoZone BD · Community Guidelines মেনে ব্যবহার করুন</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, collection, addDoc, getDocs, doc, getDoc,
+  setDoc, deleteDoc, query, orderBy, limit, serverTimestamp,
+  onSnapshot, runTransaction
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* আপনার Firebase project-এর configuration */
+const firebaseConfig = {
+  apiKey: "AIzaSyDsqsYl5had4_TC88-1tD7Da3J2FNJ-o8I",
+  authDomain: "videozone-bd.firebaseapp.com",
+  projectId: "videozone-bd",
+  storageBucket: "videozone-bd.firebasestorage.app",
+  messagingSenderId: "965936061798",
+  appId: "1:965936061798:web:7be57fe6259862286b7ca7"
+};
+
+/* নিজের Gmail এখানে বসান */
+const mrmubarak933@gmail.com";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const safeText = value => String(value ?? "");
+let currentUser = null;
+let activeVideo = null;
+let stopComments = null;
+let stopVideos = null;
+let videosCache = [];
+
+function message(text) { $("status").textContent = text; }
+function isAdmin() {
+  return !!currentUser &&
+    currentUser.emailVerified &&
+    currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+}
+function escapeHtml(value) {
+  return safeText(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+function youtubeEmbed(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") return "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(u.pathname.slice(1));
+    if (u.hostname.endsWith("youtube.com")) {
+      const id = u.searchParams.get("v");
+      if (id) return "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(id);
+      if (u.pathname.startsWith("/embed/")) return "https://www.youtube-nocookie.com" + u.pathname;
+    }
+  } catch {}
+  return null;
+}
+function validHttps(url) {
+  try { return new URL(url).protocol === "https:"; } catch { return false; }
+}
+
+$("loginBtn").onclick = async () => {
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  } catch (e) { message("লগইন হয়নি: " + e.message); }
+};
+$("logoutBtn").onclick = async () => {
+  try { await signOut(auth); } catch (e) { message(e.message); }
+};
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  $("loginBtn").classList.toggle("hidden", !!user);
+  $("logoutBtn").classList.toggle("hidden", !user);
+  $("account").textContent = user ? "লগইন: " + (user.displayName || user.email) : "ভিডিও দেখতে লগইন আবশ্যক নয়। লাইক ও মন্তব্যে লগইন করুন।";
+  $("adminPanel").classList.toggle("hidden", !isAdmin());
+  message(user ? "লগইন সফল।" : "ওয়েবসাইট প্রস্তুত।");
+  renderVideos();
+});
+
+function listenVideos() {
+  if (stopVideos) stopVideos();
+  stopVideos = onSnapshot(
+    query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(100)),
+    snap => {
+      videosCache = snap.docs.map(d => ({id:d.id, ...d.data()}));
+      renderVideos();
+    },
+    err => { message("ভিডিও লোড হয়নি: " + err.message); $("empty").textContent = "ডেটাবেস Rules পরীক্ষা করুন।"; }
+  );
+}
+listenVideos();
+
+function renderVideos() {
+  const term = $("search").value.trim().toLowerCase();
+  const cat = $("category").value;
+  const list = videosCache.filter(v =>
+    (!cat || v.category === cat) &&
+    (!term || (v.title || "").toLowerCase().includes(term) ||
+      (v.description || "").toLowerCase().includes(term))
+  );
+  $("videos").innerHTML = list.map(v => `
+    <article class="card">
+      ${validHttps(v.thumbnailUrl || "") ?
+        `<img class="thumb" src="${escapeHtml(v.thumbnailUrl)}" alt="" loading="lazy">` :
+        `<div class="thumb" style="display:grid;place-items:center;font-size:38px">▶</div>`}
+      <div class="cardbody">
+        <h3>${escapeHtml(v.title)}</h3>
+        <p class="muted">${escapeHtml(v.category || "Other")} · ${escapeHtml(v.description || "")}</p>
+        <div class="actions">
+          <button data-watch="${escapeHtml(v.id)}">ভিডিও দেখুন</button>
+          ${isAdmin() ? `<button class="secondary" data-delete="${escapeHtml(v.id)}">মুছুন</button>` : ""}
+        </div>
+      </div>
+    </article>`).join("");
+  $("empty").textContent = list.length ? "" : "এখনো কোনো ভিডিও নেই।";
+  $("empty").classList.toggle("hidden", list.length > 0);
+}
+$("search").addEventListener("input", renderVideos);
+$("category").addEventListener("change", renderVideos);
+
+$("videos").addEventListener("click", async e => {
+  const watch = e.target.closest("[data-watch]");
+  const del = e.target.closest("[data-delete]");
+  if (watch) {
+    const v = videosCache.find(x => x.id === watch.dataset.watch);
+    if (v) await openVideo(v);
+  }
+  if (del && isAdmin() && confirm("এই ভিডিওটি মুছে ফেলবেন?")) {
+    try { await deleteDoc(doc(db, "videos", del.dataset.delete)); message("ভিডিও মুছে ফেলা হয়েছে।"); }
+    catch (err) { message("মোছা যায়নি: " + err.message); }
+  }
+});
+
+async function openVideo(v) {
+  activeVideo = v;
+  $("playerWrap").style.display = "block";
+  $("playerTitle").textContent = v.title || "ভিডিও";
+  $("playerDescription").textContent = v.description || "";
+  $("player").replaceChildren();
+  const embed = youtubeEmbed(v.url);
+  if (embed) {
+    const iframe = document.createElement("iframe");
+    iframe.src = embed;
+    iframe.title = v.title || "Video";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    iframe.style.cssText = "width:100%;aspect-ratio:16/9;border:0";
+    $("player").append(iframe);
+  } else if (validHttps(v.url || "") && /\.mp4($|\?)/i.test(v.url)) {
+    const video = document.createElement("video");
+    video.src = v.url;
+    video.controls = true;
+    video.playsInline = true;
+    video.style.cssText = "width:100%;max-height:65vh";
+    $("player").append(video);
+  } else {
+    $("player").textContent = "এই লিংকটি সমর্থিত নয়। YouTube বা HTTPS MP4 লিংক ব্যবহার করুন।";
+  }
+  $("viewCount").textContent = "ভিউ গণনা হচ্ছে…";
+  $("comments").innerHTML = "";
+  $("playerWrap").scrollIntoView({behavior:"smooth"});
+  if (stopComments) stopComments();
+  stopComments = onSnapshot(
+    query(collection(db, "videos", v.id, "comments"), orderBy("createdAt", "desc"), limit(50)),
+    snap => {
+      $("comments").innerHTML = snap.docs.map(d => {
+        const c = d.data();
+        return `<div class="comment"><b>${escapeHtml(c.name || "ব্যবহারকারী")}</b><p>${escapeHtml(c.text)}</p></div>`;
+      }).join("") || '<p class="muted">এখনো কোনো মন্তব্য নেই।</p>';
+    },
+    err => message("মন্তব্য লোড হয়নি: " + err.message)
+  );
+  try {
+    if (currentUser) {
+      await setDoc(doc(db, "videos", v.id, "views", currentUser.uid), {
+        uid: currentUser.uid, createdAt: serverTimestamp()
+      }, {merge:true});
+    }
+    const count = await getDocs(collection(db, "videos", v.id, "views"));
+    $("viewCount").textContent = count.size + " অনন্য লগইন করা দর্শক";
+  } catch (e) {
+    $("viewCount").textContent = "ভিউ গণনার জন্য লগইন প্রয়োজন হতে পারে।";
+  }
+}
+$("closePlayer").onclick = () => {
+  $("playerWrap").style.display = "none";
+  $("player").replaceChildren();
+  if (stopComments) { stopComments(); stopComments = null; }
+  activeVideo = null;
+};
+
+$("likeBtn").onclick = async () => {
+  if (!currentUser) return message("লাইক দিতে আগে Google Login করুন।");
+  if (!activeVideo) return;
+  const ref = doc(db, "videos", activeVideo.id, "likes", currentUser.uid);
+  try {
+    const existing = await getDoc(ref);
+    if (existing.exists()) {
+      await deleteDoc(ref);
+      $("likeBtn").textContent = "♡ লাইক";
+    } else {
+      await setDoc(ref, {uid:currentUser.uid, createdAt:serverTimestamp()});
+      $("likeBtn").textContent = "♥ লাইক করা হয়েছে";
+    }
+  } catch (e) { message("লাইক করা যায়নি: " + e.message); }
+};
+
+$("commentForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!currentUser) return message("মন্তব্য করতে আগে Google Login করুন।");
+  if (!activeVideo) return;
+  const text = $("commentText").value.trim();
+  if (!text || text.length > 500) return;
+  try {
+    await addDoc(collection(db, "videos", activeVideo.id, "comments"), {
+      uid: currentUser.uid,
+      name: currentUser.displayName || "ব্যবহারকারী",
+      text,
+      createdAt: serverTimestamp()
+    });
+    $("commentText").value = "";
+    message("মন্তব্য যোগ হয়েছে।");
+  } catch (e) { message("মন্তব্য পাঠানো যায়নি: " + e.message); }
+};
+
+$("videoForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!isAdmin()) return message("শুধু অনুমোদিত Admin ভিডিও যোগ করতে পারবেন।");
+  const title = $("videoTitle").value.trim();
+  const description = $("videoDescription").value.trim();
+  const category = $("videoCategory").value;
+  const url = $("videoUrl").value.trim();
+  const thumbnailUrl = $("thumbnailUrl").value.trim();
+  if (!validHttps(url)) return message("ভিডিও URL অবশ্যই HTTPS হতে হবে।");
+  if (thumbnailUrl && !validHttps(thumbnailUrl)) return message("Thumbnail URL অবশ্যই HTTPS হতে হবে।");
+  if (!youtubeEmbed(url) && !/\.mp4($|\?)/i.test(url)) {
+    return message("শুধু YouTube বা সরাসরি HTTPS MP4 লিংক ব্যবহার করুন।");
+  }
+  try {
+    await addDoc(collection(db, "videos"), {
+      title, description, category, url, thumbnailUrl,
+      createdAt: serverTimestamp(),
+      createdBy: currentUser.uid
+    });
+    e.target.reset();
+    message("ভিডিও যোগ হয়েছে!");
+  } catch (err) { message("ভিডিও যোগ হয়নি: " + err.message); }
+};
+</script>
+</body>
+</html>
